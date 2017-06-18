@@ -3,17 +3,18 @@ package periodic
 import (
 	"bytes"
 	"container/heap"
-	"github.com/Lupino/periodic/driver"
-	"github.com/Lupino/periodic/protocol"
-	"github.com/Lupino/periodic/queue"
-	"github.com/Lupino/periodic/stat"
-	"github.com/felixge/tcpkeepalive"
 	"io"
 	"log"
 	"net"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jmuyuyang/periodic/driver"
+	"github.com/jmuyuyang/periodic/protocol"
+	"github.com/jmuyuyang/periodic/queue"
+	"github.com/jmuyuyang/periodic/stat"
+	"github.com/felixge/tcpkeepalive"
 )
 
 // Sched defined periodic schedule
@@ -163,10 +164,17 @@ func (sched *Sched) done(jobID int64) {
 	}
 	job, err := sched.driver.Get(jobID)
 	if err == nil {
-		sched.driver.Delete(jobID)
 		sched.decrStatJob(job)
 		sched.decrStatProc(job)
 		sched.removeRevertPQ(job)
+		if job.IsPeriod() {
+			job.ResetPeriod()
+			job.SetReady()
+			sched.driver.Save(&job)
+			sched.pushJobPQ(job)
+		} else {
+			sched.driver.Delete(jobID)
+		}
 	}
 	return
 }
@@ -215,6 +223,7 @@ func (sched *Sched) lessItem() (lessItem *queue.Item) {
 		return sched.cacheItem
 	}
 	maybeItem := make(map[string]*queue.Item)
+	sched.funcLocker.Lock()
 	for Func, stat := range sched.stats {
 		if stat.Worker.Int() == 0 {
 			continue
@@ -227,8 +236,8 @@ func (sched *Sched) lessItem() (lessItem *queue.Item) {
 		item := heap.Pop(pq).(*queue.Item)
 
 		maybeItem[Func] = item
-
 	}
+	sched.funcLocker.Unlock()
 
 	if len(maybeItem) == 0 {
 		return nil
@@ -253,6 +262,10 @@ func (sched *Sched) lessItem() (lessItem *queue.Item) {
 			continue
 		}
 		pq := sched.jobPQ[Func]
+		old := pq.Get(item.Value)
+		if old != nil {
+			heap.Remove(pq, old.Index)
+		}
 		heap.Push(pq, item)
 	}
 	sched.cacheItem = lessItem
@@ -284,7 +297,6 @@ func (sched *Sched) handleJobPQ() {
 
 		if err != nil {
 			sched.clearCacheItem()
-			log.Printf("handleJobPQ error job: %d %v\n", lessItem.Value, err)
 			continue
 		}
 
@@ -322,14 +334,13 @@ func (sched *Sched) handleRevertPQ() {
 		}
 		sched.PQLocker.Lock()
 		pqLen := sched.revertPQ.Len()
-		sched.PQLocker.Unlock()
 		if pqLen == 0 {
+			sched.PQLocker.Unlock()
 			sched.resetRevertTimer(time.Minute)
 			current = <-sched.revTimer.C
 			continue
 		}
 
-		sched.PQLocker.Lock()
 		item := heap.Pop(&sched.revertPQ).(*queue.Item)
 		sched.PQLocker.Unlock()
 
@@ -342,7 +353,6 @@ func (sched *Sched) handleRevertPQ() {
 		revertJob, err := sched.driver.Get(item.Value)
 
 		if err != nil {
-			log.Printf("handleRevertPQ error: job: %d %v\n", item.Value, err)
 			continue
 		}
 
@@ -432,7 +442,7 @@ func (sched *Sched) decrStatProc(job driver.Job) {
 	}
 }
 
-func (sched *Sched) schedLater(jobID int64, delay int64) {
+func (sched *Sched) schedLater(jobID, delay, counter int64) {
 	defer sched.notifyJobTimer()
 	defer sched.notifyRevertTimer()
 	defer sched.jobLocker.Unlock()
@@ -446,6 +456,7 @@ func (sched *Sched) schedLater(jobID int64, delay int64) {
 	job.SetReady()
 	var now = time.Now()
 	job.SchedAt = int64(now.Unix()) + delay
+	job.Counter = job.Counter + counter
 	sched.driver.Save(&job)
 	sched.pushJobPQ(job)
 	return
@@ -476,6 +487,10 @@ func (sched *Sched) pushJobPQ(job driver.Job) bool {
 			sched.jobPQ[job.Func] = pq
 			heap.Init(pq)
 		}
+		old := pq.Get(item.Value)
+		if old != nil {
+			heap.Remove(pq, old.Index)
+		}
 		heap.Push(pq, item)
 		return true
 	}
@@ -493,6 +508,10 @@ func (sched *Sched) pushRevertPQ(job driver.Job) {
 		item := &queue.Item{
 			Value:    job.ID,
 			Priority: runAt + job.Timeout,
+		}
+		old := sched.revertPQ.Get(item.Value)
+		if old != nil {
+			heap.Remove(&sched.revertPQ, old.Index)
 		}
 		heap.Push(&sched.revertPQ, item)
 	}

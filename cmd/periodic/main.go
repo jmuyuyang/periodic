@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/Lupino/periodic"
-	"github.com/Lupino/periodic/cmd/periodic/subcmd"
-	"github.com/Lupino/periodic/driver"
-	"github.com/Lupino/periodic/driver/leveldb"
-	"github.com/Lupino/periodic/driver/redis"
+	"github.com/jmuyuyang/periodic"
+	"github.com/jmuyuyang/periodic/cmd/periodic/subcmd"
+	"github.com/jmuyuyang/periodic/driver"
+	"github.com/jmuyuyang/periodic/driver/leveldb"
+	"github.com/jmuyuyang/periodic/driver/redis"
 	"github.com/codegangsta/cli"
 	"log"
 	"os"

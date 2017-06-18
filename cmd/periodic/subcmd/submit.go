@@ -3,8 +3,8 @@ package subcmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/Lupino/periodic/driver"
-	"github.com/Lupino/periodic/protocol"
+	"github.com/jmuyuyang/periodic/driver"
+	"github.com/jmuyuyang/periodic/protocol"
 	"log"
 	"net"
 	"strings"

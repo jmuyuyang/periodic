@@ -1,6 +1,6 @@
 Periodic task system
 ====================
-[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/Lupino/periodic?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/jmuyuyang/periodic?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 What is Periodic?
 -----------------
@@ -16,7 +16,7 @@ The periodic server will find a suitable worker that can run the job when then j
 The worker performs the work requested by the client and sends a stat to the periodic server.
 Periodic provides client and worker APIs that your applications call to talk with the periodic server (also known as `periodic -d`) so you don’t need to deal with networking or mapping of jobs.
 
-![Periodic](https://raw.githubusercontent.com/Lupino/periodic/master/resources/periodic.jpg)
+![Periodic](https://raw.githubusercontent.com/jmuyuyang/periodic/master/resources/periodic.jpg)
 
 Internally, the periodic client and worker APIs communicate with the periodic server using TCP sockets.
 To explain how Periodic works in more detail, lets look at a simple application that will print a string on a random delay.
@@ -75,7 +75,7 @@ and forwards the job on to one of the free workers.
 The Periodic worker API then takes this request,
 runs the function `random_print`, and sends the job stat of that function back to the periodic server.
 
-![Random print](https://raw.githubusercontent.com/Lupino/periodic/master/resources/random_print.png)
+![Random print](https://raw.githubusercontent.com/jmuyuyang/periodic/master/resources/random_print.png)
 
 As you can see, the client and worker APIs (along with the periodic server) deal with the job management and network communication so you can focus on the application parts.
 
@@ -85,7 +85,7 @@ Quick start
 
 ### Install
 
-    go get -v github.com/Lupino/periodic/cmd/periodic
+    go get -v github.com/jmuyuyang/periodic/cmd/periodic
     periodic -h
 
 ### Start periodic server
@@ -120,9 +120,9 @@ Depends
 Periodic clients
 ----------------
 
-* [node-periodic](https://github.com/Lupino/node-periodic)
-* [python-aio-periodic](https://github.com/Lupino/python-aio-periodic)
-* write you owne client see [protocol](https://godoc.org/github.com/Lupino/periodic/protocol).
+* [node-periodic](https://github.com/jmuyuyang/node-periodic)
+* [python-aio-periodic](https://github.com/jmuyuyang/python-aio-periodic)
+* write you owne client see [protocol](https://godoc.org/github.com/jmuyuyang/periodic/protocol).
 * http client api.
 ```
 curl http://ip:port                      # Show the status of periodic

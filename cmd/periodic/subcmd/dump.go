@@ -3,7 +3,7 @@ package subcmd
 import (
 	"bytes"
 	"fmt"
-	"github.com/Lupino/periodic/protocol"
+	"github.com/jmuyuyang/periodic/protocol"
 	"log"
 	"net"
 	"os"

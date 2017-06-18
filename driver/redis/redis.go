@@ -3,7 +3,7 @@ package redis
 import (
 	"errors"
 	"fmt"
-	"github.com/Lupino/periodic/driver"
+	"github.com/jmuyuyang/periodic/driver"
 	"github.com/garyburd/redigo/redis"
 	"github.com/golang/groupcache/lru"
 	"log"

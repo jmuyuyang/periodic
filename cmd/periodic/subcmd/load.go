@@ -2,7 +2,7 @@ package subcmd
 
 import (
 	"bytes"
-	"github.com/Lupino/periodic/protocol"
+	"github.com/jmuyuyang/periodic/protocol"
 	"io"
 	"log"
 	"net"
