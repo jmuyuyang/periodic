@@ -120,8 +120,8 @@ Depends
 Periodic clients
 ----------------
 
-* [node-periodic](https://github.com/jmuyuyang/node-periodic)
-* [python-aio-periodic](https://github.com/jmuyuyang/python-aio-periodic)
+* [node-periodic](https://github.com/Lupino/node-periodic)
+* [python-aio-periodic](https://github.com/Lupino/python-aio-periodic)
 * write you owne client see [protocol](https://godoc.org/github.com/jmuyuyang/periodic/protocol).
 * http client api.
 ```
