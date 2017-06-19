@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/felixge/tcpkeepalive"
 	"github.com/jmuyuyang/periodic/driver"
 	"github.com/jmuyuyang/periodic/protocol"
 	"github.com/jmuyuyang/periodic/queue"
 	"github.com/jmuyuyang/periodic/stat"
-	"github.com/felixge/tcpkeepalive"
 )
 
 // Sched defined periodic schedule

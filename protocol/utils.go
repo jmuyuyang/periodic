@@ -12,17 +12,20 @@ var NullChar = []byte("\x00\x01")
 // ParseCommand payload to extract msgID cmd and data
 func ParseCommand(payload []byte) (msgID []byte, cmd Command, data []byte) {
 	parts := bytes.SplitN(payload, NullChar, 3)
-	var err = fmt.Sprintf("InvalID %v\n", payload)
-	if len(parts) == 1 {
+	partSize := len(parts)
+	var err = fmt.Errorf("InvalID %v\n", payload)
+	if partSize <= 1 {
 		panic(err)
 	}
 	msgID = parts[0]
-	if len(parts[1]) != 1 {
-		panic(err)
-	}
-	cmd = Command(parts[1][0])
-	if len(parts) == 3 && len(parts[2]) > 0 {
-		data = parts[2]
+	if partSize == 2 && len(parts[1]) != 1 {
+		cmd = UNKNOWN
+		data = parts[1]
+	} else {
+		cmd = Command(parts[1][0])
+		if partSize == 3 && len(parts[2]) > 0 {
+			data = parts[2]
+		}
 	}
 	return
 }
@@ -35,7 +38,7 @@ func MakeHeader(data []byte) ([]byte, error) {
 	length := uint32(len(data))
 
 	if length > 0x7fffffff {
-		return nil, errors.New("Data to large")
+		return nil, errors.New("Data too large")
 	}
 
 	header[0] = byte((length >> 24) & 0xff)

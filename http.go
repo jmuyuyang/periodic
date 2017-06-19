@@ -5,12 +5,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/jmuyuyang/periodic/driver"
-	"github.com/jmuyuyang/periodic/protocol"
 	"net"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/jmuyuyang/periodic/driver"
+	"github.com/jmuyuyang/periodic/protocol"
 )
 
 var (

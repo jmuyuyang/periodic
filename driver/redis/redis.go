@@ -3,13 +3,14 @@ package redis
 import (
 	"errors"
 	"fmt"
-	"github.com/jmuyuyang/periodic/driver"
-	"github.com/garyburd/redigo/redis"
-	"github.com/golang/groupcache/lru"
 	"log"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/garyburd/redigo/redis"
+	"github.com/golang/groupcache/lru"
+	"github.com/jmuyuyang/periodic/driver"
 )
 
 // PREFIX the redis key prefix

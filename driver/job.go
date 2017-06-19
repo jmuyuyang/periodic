@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Lupino/periodic/util"
 	"github.com/gorhill/cronexpr"
+	"github.com/jmuyuyang/periodic/util"
 )
 
 // Job workload.

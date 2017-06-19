@@ -3,10 +3,11 @@ package periodic
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/jmuyuyang/periodic/driver"
-	"github.com/jmuyuyang/periodic/protocol"
 	"io"
 	"log"
+
+	"github.com/jmuyuyang/periodic/driver"
+	"github.com/jmuyuyang/periodic/protocol"
 )
 
 type client struct {

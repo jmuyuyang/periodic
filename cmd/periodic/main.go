@@ -1,18 +1,20 @@
 package main
 
 import (
-	"github.com/jmuyuyang/periodic"
-	"github.com/jmuyuyang/periodic/cmd/periodic/subcmd"
-	"github.com/jmuyuyang/periodic/driver"
-	"github.com/jmuyuyang/periodic/driver/leveldb"
-	"github.com/jmuyuyang/periodic/driver/redis"
-	"github.com/codegangsta/cli"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
 	"runtime/pprof"
+	"strconv"
 	"time"
+
+	"github.com/jmuyuyang/periodic"
+	"github.com/jmuyuyang/periodic/cmd/periodic/subcmd"
+	"github.com/jmuyuyang/periodic/driver"
+	"github.com/jmuyuyang/periodic/driver/leveldb"
+	"github.com/jmuyuyang/periodic/driver/redis"
+	"github.com/urfave/cli"
 )
 
 func main() {
@@ -67,8 +69,9 @@ func main() {
 		{
 			Name:  "status",
 			Usage: "Show status",
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				subcmd.ShowStatus(c.GlobalString("H"))
+				return nil
 			},
 		},
 		{
@@ -90,9 +93,9 @@ func main() {
 					Value: "",
 					Usage: "job workload",
 				},
-				cli.IntFlag{
+				cli.StringFlag{
 					Name:  "t",
-					Value: 0,
+					Value: "0",
 					Usage: "job running timeout",
 				},
 				cli.IntFlag{
@@ -100,22 +103,30 @@ func main() {
 					Value: 0,
 					Usage: "job sched_later",
 				},
+				cli.StringFlag{
+					Name:  "period",
+					Value: "",
+					Usage: "job running period,example: every_5s",
+				},
 			},
-			Action: func(c *cli.Context) {
-				var job = driver.Job{
-					Name:    c.String("n"),
-					Func:    c.String("f"),
-					Args:    c.String("args"),
-					Timeout: int64(c.Int("t")),
+			Action: func(c *cli.Context) error {
+				var name = c.String("n")
+				var funcName = c.String("f")
+				var opts = map[string]string{
+					"args":    c.String("args"),
+					"timeout": c.String("t"),
+					"period":  c.String("period"),
 				}
-				if len(job.Name) == 0 || len(job.Func) == 0 {
+				if len(name) == 0 || len(funcName) == 0 {
 					cli.ShowCommandHelp(c, "submit")
 					log.Fatal("Job name and func is require")
 				}
 				delay := c.Int("sched_later")
 				var now = time.Now()
-				job.SchedAt = int64(now.Unix()) + int64(delay)
-				subcmd.SubmitJob(c.GlobalString("H"), job)
+				var schedAt = int64(now.Unix()) + int64(delay)
+				opts["schedat"] = strconv.FormatInt(schedAt, 10)
+				subcmd.SubmitJob(c.GlobalString("H"), funcName, name, opts)
+				return nil
 			},
 		},
 		{
@@ -133,16 +144,15 @@ func main() {
 					Usage: "job name",
 				},
 			},
-			Action: func(c *cli.Context) {
-				var job = driver.Job{
-					Name: c.String("n"),
-					Func: c.String("f"),
-				}
-				if len(job.Name) == 0 || len(job.Func) == 0 {
+			Action: func(c *cli.Context) error {
+				var name = c.String("n")
+				var funcName = c.String("f")
+				if len(name) == 0 || len(funcName) == 0 {
 					cli.ShowCommandHelp(c, "remove")
 					log.Fatal("Job name and func is require")
 				}
-				subcmd.RemoveJob(c.GlobalString("H"), job)
+				subcmd.RemoveJob(c.GlobalString("H"), funcName, name)
+				return nil
 			},
 		},
 		{
@@ -155,13 +165,14 @@ func main() {
 					Usage: "function name",
 				},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				Func := c.String("f")
 				if len(Func) == 0 {
 					cli.ShowCommandHelp(c, "drop")
 					log.Fatal("function name is required")
 				}
 				subcmd.DropFunc(c.GlobalString("H"), Func)
+				return nil
 			},
 		},
 		{
@@ -178,10 +189,16 @@ func main() {
 					Value: "",
 					Usage: "command required",
 				},
+				cli.IntFlag{
+					Name:  "n",
+					Value: runtime.NumCPU() * 2,
+					Usage: "the size of goroutines. (optional)",
+				},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				Func := c.String("f")
 				exec := c.String("exec")
+				n := c.Int("n")
 				if len(Func) == 0 {
 					cli.ShowCommandHelp(c, "run")
 					log.Fatal("function name is required")
@@ -190,7 +207,8 @@ func main() {
 					cli.ShowCommandHelp(c, "run")
 					log.Fatal("command is required")
 				}
-				subcmd.Run(c.GlobalString("H"), Func, exec)
+				subcmd.Run(c.GlobalString("H"), Func, exec, n)
+				return nil
 			},
 		},
 		{
@@ -203,8 +221,9 @@ func main() {
 					Usage: "output file name required",
 				},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				subcmd.Dump(c.GlobalString("H"), c.String("o"))
+				return nil
 			},
 		},
 		{
@@ -217,12 +236,13 @@ func main() {
 					Usage: "input file name required",
 				},
 			},
-			Action: func(c *cli.Context) {
+			Action: func(c *cli.Context) error {
 				subcmd.Load(c.GlobalString("H"), c.String("i"))
+				return nil
 			},
 		},
 	}
-	app.Action = func(c *cli.Context) {
+	app.Action = func(c *cli.Context) error {
 		if c.Bool("d") {
 			if c.String("cpuprofile") != "" {
 				f, err := os.Create(c.String("cpuprofile"))
@@ -259,6 +279,7 @@ func main() {
 		} else {
 			cli.ShowAppHelp(c)
 		}
+		return nil
 	}
 
 	app.Run(os.Args)

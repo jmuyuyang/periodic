@@ -2,12 +2,13 @@ package periodic
 
 import (
 	"bytes"
-	"github.com/jmuyuyang/periodic/driver"
-	"github.com/jmuyuyang/periodic/protocol"
 	"io"
 	"log"
 	"strconv"
 	"sync"
+
+	"github.com/jmuyuyang/periodic/driver"
+	"github.com/jmuyuyang/periodic/protocol"
 )
 
 type worker struct {

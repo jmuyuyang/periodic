@@ -2,15 +2,16 @@ package leveldb
 
 import (
 	"fmt"
-	"github.com/jmuyuyang/periodic/driver"
-	"github.com/golang/groupcache/lru"
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/iterator"
-	"github.com/syndtr/goleveldb/leveldb/util"
 	"log"
 	"os"
 	"strconv"
 	"sync"
+
+	"github.com/golang/groupcache/lru"
+	"github.com/jmuyuyang/periodic/driver"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/iterator"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 // PREJOB prefix job key
