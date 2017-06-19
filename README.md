@@ -102,12 +102,12 @@ Quick start
 
     $ chmod +x ls-every-five-second.sh
 
-    $ periodic run -f ls5 --exec `pwd`/ls-every-five-second.sh --period every_5s
-	$ --sched_at job sched_later(only sched once) --fail_retry max fail retry count
+    $ periodic run -f ls5 --exec `pwd`/ls-every-five-second.sh
 
 ### Submit a job
 
-    $ periodic submit -f ls5 -n /tmp/
+	$ periodic submit -f ls5 -n /tmp/ --period every_5s
+	$ --sched_at job sched_later(only sched once) --fail_retry max fail retry count
 
 
 Depends
