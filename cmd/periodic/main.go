@@ -103,6 +103,11 @@ func main() {
 					Value: 0,
 					Usage: "job sched_later",
 				},
+				cli.IntFlag{
+					Name:  "fail_retry",
+					Value: 0,
+					Usage: "job fail_retry count",
+				},
 				cli.StringFlag{
 					Name:  "period",
 					Value: "",
@@ -122,9 +127,13 @@ func main() {
 					log.Fatal("Job name and func is require")
 				}
 				delay := c.Int("sched_later")
+				failRetry := c.Int("fail_retry")
 				var now = time.Now()
 				var schedAt = int64(now.Unix()) + int64(delay)
 				opts["schedat"] = strconv.FormatInt(schedAt, 10)
+				if failRetry > 0 {
+					opts["fail_retry"] = strconv.Itoa(failRetry)
+				}
 				subcmd.SubmitJob(c.GlobalString("H"), funcName, name, opts)
 				return nil
 			},

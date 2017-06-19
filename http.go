@@ -106,7 +106,8 @@ func (c *httpClient) handleSubmitJob(req *http.Request) {
 	job.Args = req.FormValue("args")
 	job.Timeout, _ = strconv.ParseInt(req.FormValue("timeout"), 10, 64)
 	job.SchedAt, _ = strconv.ParseInt(req.FormValue("sched_at"), 10, 64)
-
+	job.Period = req.FormValue("period")
+	job.FailRetry, _ = strconv.Atoi(req.FormValue("fail_retry"))
 	if job.Name == "" || job.Func == "" {
 		c.sendErrResponse(errors.New("job name or func is required"))
 		return

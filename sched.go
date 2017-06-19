@@ -19,22 +19,23 @@ import (
 
 // Sched defined periodic schedule
 type Sched struct {
-	jobTimer    *time.Timer
-	grabQueue   *grabQueue
-	procQueue   map[int64]driver.Job
-	revertPQ    queue.PriorityQueue
-	revTimer    *time.Timer
-	entryPoint  string
-	jobLocker   *sync.Mutex
-	timerLocker *sync.Mutex
-	stats       map[string]*stat.FuncStat
-	funcLocker  *sync.Mutex
-	driver      driver.StoreDriver
-	jobPQ       map[string]*queue.PriorityQueue
-	PQLocker    *sync.Mutex
-	timeout     time.Duration
-	alive       bool
-	cacheItem   *queue.Item
+	jobTimer     *time.Timer
+	grabQueue    *grabQueue
+	procQueue    map[int64]driver.Job
+	retryCounter map[int64]*stat.Counter
+	revertPQ     queue.PriorityQueue
+	revTimer     *time.Timer
+	entryPoint   string
+	jobLocker    *sync.Mutex
+	timerLocker  *sync.Mutex
+	stats        map[string]*stat.FuncStat
+	funcLocker   *sync.Mutex
+	driver       driver.StoreDriver
+	jobPQ        map[string]*queue.PriorityQueue
+	PQLocker     *sync.Mutex
+	timeout      time.Duration
+	alive        bool
+	cacheItem    *queue.Item
 }
 
 // NewSched create an instance of periodic schedule
@@ -44,6 +45,7 @@ func NewSched(entryPoint string, store driver.StoreDriver, timeout time.Duration
 	sched.revTimer = time.NewTimer(1 * time.Hour)
 	sched.grabQueue = newGrabQueue()
 	sched.procQueue = make(map[int64]driver.Job)
+	sched.retryCounter = make(map[int64]*stat.Counter)
 	sched.revertPQ = make(queue.PriorityQueue, 0)
 	heap.Init(&sched.revertPQ)
 	sched.entryPoint = entryPoint
@@ -169,6 +171,7 @@ func (sched *Sched) done(jobID int64) {
 		sched.removeRevertPQ(job)
 		if job.IsPeriod() {
 			job.ResetPeriod()
+			//job.Counter = job.Counter + 1
 			job.SetReady()
 			sched.driver.Save(&job)
 			sched.pushJobPQ(job)
@@ -389,6 +392,25 @@ func (sched *Sched) fail(jobID int64) {
 		delete(sched.procQueue, jobID)
 	}
 	job, _ := sched.driver.Get(jobID)
+	if job.FailRetry > 0 {
+		//没有设置重试次数则无限重试直到成功
+		if _, ok := sched.retryCounter[job.ID]; ok {
+			counter := sched.retryCounter[job.ID]
+			if counter.Int() >= job.FailRetry {
+				//重试次数超过限制
+				delete(sched.retryCounter, job.ID)
+				sched.decrStatJob(job)
+				sched.decrStatProc(job)
+				sched.removeRevertPQ(job)
+				sched.driver.Delete(job.ID)
+				return
+			} else {
+				counter.Incr()
+			}
+		} else {
+			sched.retryCounter[job.ID] = stat.NewCounter(1)
+		}
+	}
 	sched.decrStatProc(job)
 	sched.removeRevertPQ(job)
 	job.SetReady()

@@ -11,17 +11,18 @@ import (
 
 // Job workload.
 type Job struct {
-	ID      int64         `json:"job_id"`
-	Name    string        `json:"name"`     // The job name, this is unique.
-	Func    string        `json:"func"`     // The job function reffer on worker function
-	Args    string        `json:"workload"` // Job args
-	Timeout int64         `json:"timeout"`  // Job processing timeout
-	SchedAt int64         `json:"sched_at"` // When to sched the job.
-	Period  string        `json:"period"`
-	RunAt   int64         `json:"run_at"`  // The job is start at
-	Counter int64         `json:"counter"` // The job run counter
-	Status  string        `json:"status"`
-	timeCon timeCondition `json:"_"`
+	ID        int64         `json:"job_id"`
+	Name      string        `json:"name"`       // The job name, this is unique.
+	Func      string        `json:"func"`       // The job function reffer on worker function
+	Args      string        `json:"workload"`   // Job args
+	Timeout   int64         `json:"timeout"`    // Job processing timeout
+	SchedAt   int64         `json:"sched_at"`   // When to sched the job.
+	FailRetry int           `json:"fail_retry"` //num to retry When job fail done
+	Period    string        `json:"period"`
+	RunAt     int64         `json:"run_at"`  // The job is start at
+	Counter   int64         `json:"counter"` // The job run counter
+	Status    string        `json:"status"`
+	timeCon   timeCondition `json:"_"`
 }
 
 type timeCondition struct {

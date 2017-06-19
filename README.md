@@ -97,14 +97,13 @@ Quick start
     $ vim ls-every-five-second.sh
     #!/usr/bin/env bash
     ls -lrth $@
-    echo "SCHED_LATER 5" # tell periodic do the job 5 second later
     # echo "DONE" # tell periodic the job is done
     # echo "FAIL" # tell periodic the job is fail
 
     $ chmod +x ls-every-five-second.sh
 
-    $ periodic run -f ls5 --exec `pwd`/ls-every-five-second.sh
-
+    $ periodic run -f ls5 --exec `pwd`/ls-every-five-second.sh --period every_5s
+	$ --sched_at job sched_later(only sched once) --fail_retry max fail retry count
 
 ### Submit a job
 
@@ -129,8 +128,8 @@ curl http://ip:port                      # Show the status of periodic
 curl http://ip:port/[funcName]           # Show the status of a func
 curl -X DELETE http://ip:port/[funcName] # delete the func
 
-curl -d func=[funcName] -d name=[jobName] -d args=[jobArgs] -d timeout=[timeout] -d sched_at=[schedAt] http://ip:port # submit a job
-curl -d name=[jobName] -d args=[jobArgs] -d timeout=[timeout] -d sched_at=[schedAt] http://ip:port/[funcName]         # submit a job
+curl -d func=[funcName] -d name=[jobName] -d args=[jobArgs] -d timeout=[timeout] -d period=[period] -d sched_at=[schedAt] -d fail_retry[failRetry] http://ip:port # submit a job
+curl -d name=[jobName] -d args=[jobArgs] -d timeout=[timeout] -d period=[period] -d sched_at=[schedAt] -d fail_retry[failRetry] http://ip:port/[funcName]         # submit a job
 curl -d name=[jobName] -d act=remove http://ip:port/[funcName]                     # remove a job
 curl -d name=[jobName] -d func=[funcName] -d act=remove http://ip:port/[funcName]  # remove a job
 ```
