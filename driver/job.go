@@ -40,7 +40,6 @@ func (job *Job) Init() error {
 			job.timeCon = timeCondition{
 				Every: every,
 			}
-			job.SchedAt = time.Now().Add(every).Unix()
 		} else {
 			cron, err := cronexpr.Parse(job.Period)
 			if err != nil {
@@ -49,7 +48,6 @@ func (job *Job) Init() error {
 			job.timeCon = timeCondition{
 				Cron: cron,
 			}
-			job.SchedAt = cron.Next(time.Now()).Unix()
 		}
 	}
 	return nil

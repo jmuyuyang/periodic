@@ -121,6 +121,9 @@ func (c *client) handleSubmitJob(msgID []byte, payload []byte) (err error) {
 	}
 
 	if isNew {
+		if job.IsPeriod() {
+			job.ResetPeriod()
+		}
 		sched.incrStatJob(job)
 	}
 	if isNew || changed {

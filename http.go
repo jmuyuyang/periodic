@@ -136,6 +136,9 @@ func (c *httpClient) handleSubmitJob(req *http.Request) {
 		sched.incrStatJob(job)
 	}
 	if isNew || changed {
+		if job.IsPeriod() {
+			job.ResetPeriod()
+		}
 		sched.pushJobPQ(job)
 	}
 	sched.notifyJobTimer()
@@ -157,9 +160,9 @@ func (c *httpClient) handleStatus(funcName string) {
 	for _, st := range c.sched.stats {
 		stats[st.Name] = sstat{
 			FuncName:    st.Name,
-			TotalWorker: st.Worker.Int(),
-			TotalJob:    st.Job.Int(),
-			Processing:  st.Processing.Int(),
+			TotalWorker: int(st.Worker.Int()),
+			TotalJob:    int(st.Job.Int()),
+			Processing:  int(st.Processing.Int()),
 		}
 	}
 	var data = []byte("{}")
