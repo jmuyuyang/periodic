@@ -74,7 +74,16 @@ func (job Job) IsProc() bool {
 
 func (job *Job) ResetPeriod() {
 	if job.Period != "" {
-		schedTime := time.Unix(job.SchedAt, 0)
+		now := time.Now()
+		var schedTime time.Time
+		if job.SchedAt > 0 {
+			schedTime = time.Unix(job.SchedAt, 0)
+			if schedTime.After(now) {
+				return
+			}
+		} else {
+			schedTime = now
+		}
 		if job.timeCon.Cron == nil {
 			job.SchedAt = schedTime.Add(job.timeCon.Every).Unix()
 		} else {
