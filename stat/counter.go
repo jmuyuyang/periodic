@@ -11,8 +11,9 @@ type Counter struct {
 }
 
 // NewCounter create a counter
-func NewCounter(c int) *Counter {
+func NewCounter(c int64) *Counter {
 	var counter = new(Counter)
+	atomic.StoreInt64(&counter.c, c)
 	return counter
 }
 

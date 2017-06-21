@@ -164,13 +164,15 @@ func (sched *Sched) done(jobID int64) {
 	if _, ok := sched.procQueue[jobID]; ok {
 		delete(sched.procQueue, jobID)
 	}
+	if _, ok := sched.retryCounter[jobID]; ok {
+		delete(sched.retryCounter, jobID)
+	}
 	job, err := sched.driver.Get(jobID)
 	if err == nil {
 		sched.decrStatProc(job)
 		sched.removeRevertPQ(job)
 		if job.IsPeriod() {
 			job.ResetPeriod()
-			//job.Counter = job.Counter + 1
 			job.SetReady()
 			sched.driver.Save(&job)
 			sched.pushJobPQ(job)
@@ -393,29 +395,41 @@ func (sched *Sched) fail(jobID int64) {
 	}
 	job, _ := sched.driver.Get(jobID)
 	if job.FailRetry > 0 {
-		//没有设置重试次数则无限重试直到成功
+		//没有设置重试次数则不进行重试
 		if _, ok := sched.retryCounter[job.ID]; ok {
 			counter := sched.retryCounter[job.ID]
-			if counter.Int() >= int64(job.FailRetry) {
-				//重试次数超过限制
-				delete(sched.retryCounter, job.ID)
-				sched.decrStatJob(job)
+			if counter.Int() < int64(job.FailRetry) {
+				//重试次数未超过限制
+				counter.Incr()
 				sched.decrStatProc(job)
 				sched.removeRevertPQ(job)
-				sched.driver.Delete(job.ID)
+				job.SetReady()
+				sched.driver.Save(&job)
+				sched.pushJobPQ(job)
 				return
-			} else {
-				counter.Incr()
 			}
 		} else {
 			sched.retryCounter[job.ID] = stat.NewCounter(1)
+			sched.decrStatProc(job)
+			sched.removeRevertPQ(job)
+			job.SetReady()
+			sched.driver.Save(&job)
+			sched.pushJobPQ(job)
+			return
 		}
 	}
+	delete(sched.retryCounter, job.ID)
 	sched.decrStatProc(job)
 	sched.removeRevertPQ(job)
-	job.SetReady()
-	sched.driver.Save(&job)
-	sched.pushJobPQ(job)
+	if job.IsPeriod() {
+		job.ResetPeriod()
+		job.SetReady()
+		sched.driver.Save(&job)
+		sched.pushJobPQ(job)
+	} else {
+		sched.decrStatJob(job)
+		sched.driver.Delete(job.ID)
+	}
 	return
 }
 
