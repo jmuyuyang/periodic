@@ -105,6 +105,7 @@ func (c *httpClient) handleSubmitJob(req *http.Request) {
 	job.Func = funcName
 	job.Args = req.FormValue("args")
 	job.Timeout, _ = strconv.ParseInt(req.FormValue("timeout"), 10, 64)
+	job.Retention, _ = strconv.ParseInt(req.FormValue("retention"), 10, 64)
 	job.SchedAt, _ = strconv.ParseInt(req.FormValue("sched_at"), 10, 64)
 	job.Period = req.FormValue("period")
 	job.FailRetry, _ = strconv.Atoi(req.FormValue("fail_retry"))

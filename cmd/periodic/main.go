@@ -113,6 +113,11 @@ func main() {
 					Value: "",
 					Usage: "job running period,example: every_5s",
 				},
+				cli.StringFlag{
+					Name:  "retention",
+					Value: "86400",
+					Usage: "job retention period,example: 86400 (1d)",
+				},
 			},
 			Action: func(c *cli.Context) error {
 				var name = c.String("n")

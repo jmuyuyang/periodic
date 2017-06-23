@@ -191,7 +191,16 @@ func (sched *Sched) submitJob(item grabItem, job driver.Job) bool {
 		sched.driver.Delete(job.ID)
 		return true
 	}
+
 	if _, ok := sched.procQueue[job.ID]; ok {
+		return true
+	}
+
+	now := time.Now()
+	current := int64(now.Unix())
+	if job.Retention > 0 && current-job.SchedAt > job.Retention {
+		sched.driver.Delete(job.ID)
+		//job存活时间超过限定时间
 		return true
 	}
 
@@ -202,14 +211,15 @@ func (sched *Sched) submitJob(item grabItem, job driver.Job) bool {
 		item.w.alive = false
 		return false
 	}
-	now := time.Now()
-	current := int64(now.Unix())
 	job.SetProc()
 	job.RunAt = current
 	sched.driver.Save(&job)
 	sched.incrStatProc(job)
-	sched.pushRevertPQ(job)
-	sched.notifyRevertTimer()
+	if !job.IsPeriod() {
+		//周期性任务不支持timeout处理
+		sched.pushRevertPQ(job)
+		sched.notifyRevertTimer()
+	}
 	sched.procQueue[job.ID] = job
 	sched.grabQueue.remove(item)
 	return true
@@ -291,20 +301,16 @@ func (sched *Sched) handleJobPQ() {
 		}
 
 		lessItem := sched.lessItem()
-
 		if lessItem == nil {
 			sched.resetJobTimer(time.Minute)
 			current = <-sched.jobTimer.C
 			continue
 		}
-
 		schedJob, err := sched.driver.Get(lessItem.Value)
-
 		if err != nil {
 			sched.clearCacheItem()
 			continue
 		}
-
 		timestamp = int64(time.Now().Unix())
 
 		if schedJob.SchedAt > timestamp {
@@ -356,13 +362,11 @@ func (sched *Sched) handleRevertPQ() {
 		}
 
 		revertJob, err := sched.driver.Get(item.Value)
-
 		if err != nil {
 			continue
 		}
 
 		timestamp = int64(time.Now().Unix())
-
 		if item.Priority > timestamp {
 			sched.resetRevertTimer(time.Second * time.Duration(item.Priority-timestamp))
 			current = <-sched.revTimer.C
@@ -378,6 +382,7 @@ func (sched *Sched) handleRevertPQ() {
 		sched.driver.Save(&revertJob)
 		sched.pushJobPQ(revertJob)
 		sched.jobLocker.Lock()
+		sched.notifyJobTimer()
 		if _, ok := sched.procQueue[revertJob.ID]; ok {
 			delete(sched.procQueue, revertJob.ID)
 		}

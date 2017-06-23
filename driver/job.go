@@ -16,10 +16,11 @@ type Job struct {
 	Func      string        `json:"func"`       // The job function reffer on worker function
 	Args      string        `json:"workload"`   // Job args
 	Timeout   int64         `json:"timeout"`    // Job processing timeout
+	Retention int64         `json:"retention"`  //Job Retention Period
 	SchedAt   int64         `json:"sched_at"`   // When to sched the job.
+	RunAt     int64         `json:"run_at"`     // The job is start at
 	FailRetry int           `json:"fail_retry"` //num to retry When job fail done
 	Period    string        `json:"period"`
-	RunAt     int64         `json:"run_at"`  // The job is start at
 	Counter   int64         `json:"counter"` // The job run counter
 	Status    string        `json:"status"`
 	timeCon   timeCondition `json:"_"`
@@ -104,6 +105,10 @@ func (job *Job) SetProc() {
 func NewJob(payload []byte) (job Job, err error) {
 	err = json.Unmarshal(payload, &job)
 	if err == nil {
+		if job.Retention == 0 {
+			//默认存活时间1天
+			job.Retention = 86400
+		}
 		err = job.Init()
 	}
 	return
